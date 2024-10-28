@@ -61,3 +61,130 @@ logging.level.org.springframework.security=TRACE
 
 # Lab2 custom filter
 อยากลองใช้ filter chain มาเพื่อดัก request ก่อนที่จะวิ่งไปหา AuthenticationProvider
+
+ก่อนจะเริ่มทำเรื่อง filter จะต้องทำเรื่อง SecurityConfig ก่อน ต้องมีการ Overide ค่า SecurityFilterChain
+ก่อน เพื่อให้สามารถ register ตัว filter ของเราเข้าไปได้
+
+โดยจะเริ่มจาก basic ให้มี form login เหมือนเดิม
+```java
+//...
+public class SecurityConfig {
+    //...
+    @Bean
+    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        return http
+                .authorizeHttpRequests(
+                        authorizeHttp -> {
+                            authorizeHttp.requestMatchers("/").permitAll();
+                            // authorizeHttp.anyRequest().authenticated();
+                        }
+                )
+                .formLogin(l -> l.defaultSuccessUrl("/internal"))
+                .logout(l -> l.logoutSuccessUrl("/"))
+                .build();
+    }
+    //...
+}
+```
+- จาก code ด้านบนจะมีการ hide anyRequest().authenticated(); ไว้อยู่เพื่อดู behavior
+ว่าถ้าเราไม่เปิดจะเป็นยังไง
+
+ผลลัพธ์ที่ได้คือ
+![](./image/default-behavoir-not-config.png)
+- ก็คือ โดน denied หมดเลย
+
+แต่ถ้าเรา uncomment anyRequest().authenticated() ออกก็คือถ้า login ผ่านก็จะสามารถเข้าใช้งานได้
+```java
+//...
+public class SecurityConfig {
+    //...
+    @Bean
+    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        return http
+                .authorizeHttpRequests(
+                        authorizeHttp -> {
+                            authorizeHttp.requestMatchers("/").permitAll();
+                            authorizeHttp.anyRequest().authenticated();
+                        }
+                )
+                .formLogin(l -> l.defaultSuccessUrl("/internal"))
+                .logout(l -> l.logoutSuccessUrl("/"))
+                .build();
+    }
+    //...
+}
+```
+เพื่อทดสอบการ login ให้เพิ่ม SimpleController สักตัวนึงให้สอดคล้องกับ config ด้านบน
+```java
+
+@RestController
+public class SimpleController {
+    private static final Logger logger = LoggerFactory.getLogger(SimpleController.class);
+    @GetMapping("/")
+    public String publicPage() {
+        logger.debug("On public page");
+        logger.debug("getPrincipal {}", SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+        return "Public";
+    }
+
+    @GetMapping("/internal")
+    public String internal(Authentication authentication) {
+        logger.debug("Object after login");
+        logger.debug("getPrincipal {}", SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+        logger.debug("getName {}", authentication.getName());
+        return "Hallow internal";
+    }
+}
+```
+- การทดสอบเบื้องต้น เข้า localhost:8085/internal จะติดต้อง login
+- หลังจาก login เสร็จจะเจอหน้าแสดง text "Hallow internal"
+- ถ้าอยู่ที่ path / ไม่จำเป็นต้อง login แต่จะต้องเห็น text "Public"
+
+ลองสร้าง SimpleFilter และ register เข้าไป
+
+```java
+public class SimpleFilter extends OncePerRequestFilter {
+    private static final Logger logger = LoggerFactory.getLogger(SimpleFilter.class);
+    @Override
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain)
+            throws ServletException, IOException {
+
+        logger.debug("hola SimpleFilter");
+
+        filterChain.doFilter(request, response);
+    }
+}
+```
+- การทำงานของ Filter คือจำเป็นต้องส่งต่อ filterChain ไปด้วย และของที่อยู่บนคำสั่ง filterChain.doFilter() จะหมายถึง
+ขา request ส่วน หลัง doFilter จะเป็นขา response
+
+
+```java
+//...
+public class SecurityConfig {
+    //...
+    @Bean
+    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        return http
+                .authorizeHttpRequests(
+                        authorizeHttp -> {
+                            authorizeHttp.requestMatchers("/").permitAll();
+                            authorizeHttp.anyRequest().authenticated();
+                        }
+                )
+                .formLogin(l -> l.defaultSuccessUrl("/internal"))
+                .logout(l -> l.logoutSuccessUrl("/"))
+                .addFilterBefore(new SimpleFilter(), AuthorizationFilter.class)
+                .build();
+    }
+}
+```
+- addFilterBefore เนื่องจาก อยากให้ filter ทำงานก่อนจะเริ่มการ Authentication
+
+# Lab3 usage provider
+
+# Lab4 DaoProvider with Postgresql
+
+# Lab5 Authentication Server
