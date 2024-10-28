@@ -29,6 +29,7 @@ public class SecurityConfig {
                 .formLogin(l -> l.defaultSuccessUrl("/internal"))
                 .logout(l -> l.logoutSuccessUrl("/"))
                 .addFilterBefore(new SimpleFilter(), AuthorizationFilter.class)
+                .authenticationProvider(new SimpleProvider())
                 .build();
     }
 

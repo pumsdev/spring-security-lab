@@ -183,7 +183,74 @@ public class SecurityConfig {
 ```
 - addFilterBefore เนื่องจาก อยากให้ filter ทำงานก่อนจะเริ่มการ Authentication
 
-# Lab3 usage provider
+# Lab3 custom provider
+ลองสร้าง custom provider เพื่อเพิ่ม role เข้าไปใน Authentication Object
+
+```java
+public class SimpleProvider implements AuthenticationProvider {
+    private static final Logger logger = LoggerFactory.getLogger(SimpleProvider.class);
+    @Override
+    public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+        logger.debug("SimpleProvider yo!");
+        var name = authentication.getName();
+        if (Objects.equals(name, "user2")) {
+            // add role to user2
+            var user2 = User.withUsername("user2")
+                    .password("SET_NEW_PASSWORD")
+                    .roles("user", "devops")
+                    .build();
+            return UsernamePasswordAuthenticationToken.authenticated(
+                    user2,
+                    null,
+                    user2.getAuthorities()
+            );
+        }
+        return null;
+    }
+
+    @Override
+    public boolean supports(Class<?> authentication) {
+        return UsernamePasswordAuthenticationToken.class.isAssignableFrom(authentication);
+    }
+}
+```
+
+หลังจากสร้าง file provider แล้วก็ไป register ให้ spring security รู้จัก โดยเข้าไป add เพิ่มที่ Security Config
+```java
+//...
+public class SecurityConfig {
+    //...
+    @Bean
+    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        return http
+                .authorizeHttpRequests(
+                        authorizeHttp -> {
+                            authorizeHttp.requestMatchers("/").permitAll();
+                            authorizeHttp.anyRequest().authenticated();
+                        }
+                )
+                .formLogin(l -> l.defaultSuccessUrl("/internal"))
+                .logout(l -> l.logoutSuccessUrl("/"))
+                .addFilterBefore(new SimpleFilter(), AuthorizationFilter.class)
+                .authenticationProvider(new SimpleProvider())
+                .build();
+    }
+    //...
+}
+```
+- code ที่เพิ่มขึ้นคือ authenticationProvider โดย register ตัว SimpleProvider เข้าไปด้วย
+- การทำงานของ code จะเปลี่ยนไปเล็กน้อย คือ ทุกครั้งที่มีการ authentication จะวิ่งไปที่ SimpleProvider ก่อน
+ถ้าไม่เข้า if ก็จะไปต่อที่ default provider ซึ่งก็คือ DaoAuthenticationProvider
+
+case1: login with user1
+![initial image](./image/simple-provider-default.png)
+- จุดสังเกต คือมีการเรียกใช้ SimpleProvider และเรียก DaoAuthenticationProvider ต่อ
+- จากนั้น ค่อย redirect ไปที่ /internal
+
+case2: login with user2
+![initial image](./image/simple-provider-reach.png)
+- จุดสังเกต คือเรียกใช้ SimpleProvider แล้วเข้าไปทำงานด้านในคือ add role devops เข้าไป
+จากนั้นก็ redirect กลับไปหา /internal
 
 # Lab4 DaoProvider with Postgresql
 
