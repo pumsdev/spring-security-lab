@@ -252,6 +252,36 @@ case2: login with user2
 - จุดสังเกต คือเรียกใช้ SimpleProvider แล้วเข้าไปทำงานด้านในคือ add role devops เข้าไป
 จากนั้นก็ redirect กลับไปหา /internal
 
-# Lab4 DaoProvider with Postgresql
+# Lab4 Change passwordEncoder function
+ลองเปลี่ยนวิธีการ encoder password เพื่อเข้าใจวิธีการของ DelegatingPasswordEncoder
+หลัก ๆ คือ `{}` จะเป็นตัวบอก function ที่ใช้ในการ encode password
+ตัวอย่างอื่นดูได้จาก reference อันนี้
+https://docs.spring.io/spring-security/reference/features/authentication/password-storage.html#authentication-password-storage-dpe
+
+```java
+public class SecurityConfig {
+    //...
+    @Bean
+    InMemoryUserDetailsManager inMemoryUserDetailsManager() {
+
+        List<UserDetails> users = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            Pbkdf2PasswordEncoder encoder = Pbkdf2PasswordEncoder.defaultsForSpringSecurity_v5_8();
+            String result = encoder.encode("myPassword");
+            result = "{pbkdf2@SpringSecurity_v5_8}" + result;
+            users.add(User.withUsername("user" + i)
+                    .password(result)
+                    .roles("user")
+                    .build());
+            System.out.println("user " + i + " password is " + users.get(i).getPassword());
+        }
+
+        return new InMemoryUserDetailsManager(users);
+    }
+    //...
+}
+```
+- หลังจากปรับวิธีการ endcode แล้ว login ที่หน้าเว็บอีกที user: user1, password: myPassword
+- ต้องเข้าได้ปกติ เพราะว่าการ endcode จะมีผลกับ ของที่เก็บใน database และ วิธีการ compare
 
 # Lab5 Authentication Server
