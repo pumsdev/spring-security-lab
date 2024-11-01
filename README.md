@@ -90,7 +90,7 @@ public class SecurityConfig {
     //...
 }
 ```
-- จาก code ด้านบนจะมีการ hide anyRequest().authenticated(); ไว้อยู่เพื่อดู behavior
+- จาก code ด้านบนจะมีการ comment anyRequest().authenticated(); ไว้อยู่เพื่อดู behavior
 ว่าถ้าเราไม่เปิดจะเป็นยังไง
 
 ผลลัพธ์ที่ได้คือ
