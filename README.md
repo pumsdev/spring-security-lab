@@ -1,10 +1,14 @@
+# Overview
+![initial image](./image/overview.png)
+
+
 # Lab1 Spring security with user password
 Initialize project จะเจอหน้า login สำหรับทุก endpoint เลย
 
 ![initial image](./image/initial.png)
 - ตอน run จะมี log default password และตัว default user คือ user
 - ถ้า login ถูกจะปล่อยให้เข้าไปแล้วเจอ whitelabel
-- ถ้า login ผิดจะขึ้น Bad credentials
+- ถ้า login ผิดจะขึ้น Bad credentials!
 
 เริ่มต้นด้วยการ ลองเปลี่ยน password เข้าไปใน in memory database
 ```java
