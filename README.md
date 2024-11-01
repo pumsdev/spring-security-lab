@@ -303,5 +303,3 @@ public class SecurityConfig {
 ```
 - หลังจากปรับวิธีการ endcode แล้ว login ที่หน้าเว็บอีกที user: user1, password: myPassword
 - ต้องเข้าได้ปกติ เพราะว่าการ endcode จะมีผลกับ ของที่เก็บใน database และ วิธีการ compare
-
-# Lab5 Authentication Server
