@@ -1,5 +1,21 @@
 # Overview
-![initial image](./image/overview1.png)
+![Overview image](./image/overview1.png)
+
+Prerequisite:
+- project ใน build.gradle เพิ่ม implement ของ spring security เข้าไป
+```build.gradle
+...
+    dependencies {
+        implementation 'org.springframework.boot:spring-boot-starter-security'
+        implementation 'org.springframework.boot:spring-boot-starter-web'
+        compileOnly 'org.projectlombok:lombok'
+        annotationProcessor 'org.projectlombok:lombok'
+        testImplementation 'org.springframework.boot:spring-boot-starter-test'
+        testImplementation 'org.springframework.security:spring-security-test'
+        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    }
+...
+```
 
 
 # Lab1 Spring security with user password
