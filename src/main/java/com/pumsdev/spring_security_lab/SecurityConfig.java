@@ -6,7 +6,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
@@ -31,6 +30,7 @@ public class SecurityConfig {
                 .formLogin(l -> l.defaultSuccessUrl("/internal"))
                 .logout(l -> l.logoutSuccessUrl("/"))
                 .addFilterBefore(new SimpleFilter(), AuthorizationFilter.class)
+                .authenticationProvider(new ZimpleProvider())
                 .authenticationProvider(new SimpleProvider())
                 .build();
     }

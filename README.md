@@ -303,3 +303,63 @@ public class SecurityConfig {
 ```
 - หลังจากปรับวิธีการ endcode แล้ว login ที่หน้าเว็บอีกที user: user1, password: myPassword
 - ต้องเข้าได้ปกติ เพราะว่าการ endcode จะมีผลกับ ของที่เก็บใน database และ วิธีการ compare
+
+# Lab 5 ทดสอบเรื่องการเรียงของ Provider
+เพิ่ม ZimpleProvider โดย copy มาจาก SimpleProvider แล้วก็เปลี่ยนเป็น user4 แทน
+```java
+public class ZimpleProvider implements AuthenticationProvider {
+    private static final Logger logger = LoggerFactory.getLogger(ZimpleProvider.class);
+    @Override
+    public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+        logger.debug("ZimpleProvider yo!");
+        var name = authentication.getName();
+        if (Objects.equals(name, "user4")) {
+            // add role to user4
+            logger.debug("add role devops to user4");
+            var user4 = User.withUsername("user4")
+                    .password("SET_NEW_PASSWORD")
+                    .roles("user", "devops")
+                    .build();
+            return UsernamePasswordAuthenticationToken.authenticated(
+                    user4,
+                    null,
+                    user4.getAuthorities()
+            );
+        }
+        return null;
+    }
+
+    @Override
+    public boolean supports(Class<?> authentication) {
+        return UsernamePasswordAuthenticationToken.class.isAssignableFrom(authentication);
+    }
+}
+
+```
+
+จากนั้นที่ securityConfig เพิ่มการ register provider ให้ ZimpleProvider ขึ้นก่อน
+```java
+public class SecurityConfig {
+   //...
+    @Bean
+    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        return http
+                .authorizeHttpRequests(
+                        authorizeHttp -> {
+                            authorizeHttp.requestMatchers("/").permitAll();
+                            authorizeHttp.anyRequest().authenticated();
+                        }
+                )
+                .formLogin(l -> l.defaultSuccessUrl("/internal"))
+                .logout(l -> l.logoutSuccessUrl("/"))
+                .addFilterBefore(new SimpleFilter(), AuthorizationFilter.class)
+                .authenticationProvider(new ZimpleProvider())
+                .authenticationProvider(new SimpleProvider())
+                .build();
+    }
+    //...
+}
+```
+ผลลัพธ์ที่ได้ คือจะมี log ของ zimpleProvider ขึ้นก่อน simpleProvider ดังนั้น
+การเรียงของ provider จะขึ้นอยู่กับลำดับในการ configuration
+
