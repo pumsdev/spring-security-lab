@@ -2,6 +2,7 @@ package com.pumsdev.spring_security_lab;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.User;
@@ -27,11 +28,12 @@ public class SecurityConfig {
                             authorizeHttp.anyRequest().authenticated();
                         }
                 )
-                .formLogin(l -> l.defaultSuccessUrl("/internal"))
+//                .formLogin(l -> l.defaultSuccessUrl("/internal"))
                 .logout(l -> l.logoutSuccessUrl("/"))
                 .addFilterBefore(new SimpleFilter(), AuthorizationFilter.class)
                 .authenticationProvider(new ZimpleProvider())
                 .authenticationProvider(new SimpleProvider())
+                .httpBasic(Customizer.withDefaults())
                 .build();
     }
 

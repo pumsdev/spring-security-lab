@@ -363,3 +363,60 @@ public class SecurityConfig {
 ผลลัพธ์ที่ได้ คือจะมี log ของ zimpleProvider ขึ้นก่อน simpleProvider ดังนั้น
 การเรียงของ provider จะขึ้นอยู่กับลำดับในการ configuration
 
+
+# Lab 6 HTTPBasic
+มาลองใช้ http basic แบบ default ก่อน โดยการ ลบ config formLogin ออกและเพิ่ม httpBasic เข้ามาแทน
+```java
+public class SecurityConfig {
+   //...
+    @Bean
+    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        return http
+                .authorizeHttpRequests(
+                        authorizeHttp -> {
+                            authorizeHttp.requestMatchers("/").permitAll();
+                            authorizeHttp.anyRequest().authenticated();
+                        }
+                )
+//                .formLogin(l -> l.defaultSuccessUrl("/internal"))
+                .logout(l -> l.logoutSuccessUrl("/"))
+                .addFilterBefore(new SimpleFilter(), AuthorizationFilter.class)
+                .authenticationProvider(new ZimpleProvider())
+                .authenticationProvider(new SimpleProvider())
+                .httpBasic(Customizer.withDefaults())
+                .build();
+    }
+    //...
+}
+```
+จากนั้นลอง curl ไปที่ `/internal` ผลลัพธ์ควรโดนเตะ 401 แบบด้านล่าง
+```sh
+➜  ~ curl -v localhost:8085/internal
+*   Trying 127.0.0.1:8085...
+* Connected to localhost (127.0.0.1) port 8085 (#0)
+> GET /internal HTTP/1.1
+> Host: localhost:8085
+> User-Agent: curl/8.1.2
+> Accept: */*
+>
+< HTTP/1.1 401
+< Set-Cookie: JSESSIONID=68863F0E6C40D165431EB81B73B8132D; Path=/; HttpOnly
+< WWW-Authenticate: Basic realm="Realm"
+< X-Content-Type-Options: nosniff
+< X-XSS-Protection: 0
+< Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+< Pragma: no-cache
+< Expires: 0
+< X-Frame-Options: DENY
+< Content-Length: 0
+< Date: Fri, 08 Nov 2024 08:26:46 GMT
+<
+* Connection #0 to host localhost left intact
+```
+แต่ถ้าลอง curl แบบระบุ user เข้าไป ควรจะผ่าน
+```shell
+export basic_user=$(echo -n "user1:myPassword" | base64)
+curl -v -H "Authorization: Basic $basic_user" localhost:8085/internal
+```
+ถ้าดูผลลัพธ์ใน log การทำงานจะเห็นว่ามีเพิ่ม BasicAuthFilter เข้ามาด้วย
+![basic auth filter image](./image/basic-auth.png)
