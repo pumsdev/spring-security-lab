@@ -1,0 +1,14 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: spring-security-lab
+
+logging:
+  level:
+    com:
+      pumspdev: DEBUG
+    org:
+      springframework:
+        security: TRACE

@@ -3,8 +3,8 @@
 
 Prerequisite:
 - project ใน build.gradle เพิ่ม implement ของ spring security เข้าไป
-```build.gradle
-...
+```groovy
+//...
     dependencies {
         implementation 'org.springframework.boot:spring-boot-starter-security'
         implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -14,7 +14,7 @@ Prerequisite:
         testImplementation 'org.springframework.security:spring-security-test'
         testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     }
-...
+//...
 ```
 
 
@@ -420,3 +420,49 @@ curl -v -H "Authorization: Basic $basic_user" localhost:8085/internal
 ```
 ถ้าดูผลลัพธ์ใน log การทำงานจะเห็นว่ามีเพิ่ม BasicAuthFilter เข้ามาด้วย
 ![basic auth filter image](./image/basic-auth.png)
+
+
+----
+# Authorization Server
+
+เพิ่ม dependency oauth2
+```groovy
+//...
+    dependencies {
+        //...
+        implementation 'org.springframework.boot:spring-security-oauth2-authorization-server'
+        //...
+    }
+//...
+```
+ต้อง comment config ใน SecurityConfig ทั้งหมดก่อน
+เพิ่ม configuration ตาม link ด้านล่าง
+https://docs.spring.io/spring-authorization-server/reference/getting-started.html#defining-required-components
+
+
+ปรับแก้ ให้ใช้ grant type เป็น client credentials `AuthorizationGrantType.CLIENT_CREDENTIALS`
+```java
+//...
+public class SecurityConfig {
+    //...
+    @Bean
+    public RegisteredClientRepository registeredClientRepository() {
+        RegisteredClient oidcClient = RegisteredClient.withId(UUID.randomUUID().toString())
+                .clientId("oidc-client")
+                .clientSecret("{noop}secret")
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+                .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+                .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+                .redirectUri("http://127.0.0.1:8085/login/oauth2/code/oidc-client")
+                .postLogoutRedirectUri("http://127.0.0.1:8085/")
+                .scope(OidcScopes.OPENID)
+                .scope(OidcScopes.PROFILE)
+                .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
+                .build();
+
+        return new InMemoryRegisteredClientRepository(oidcClient);
+    }
+    //...
+}
+
+```
