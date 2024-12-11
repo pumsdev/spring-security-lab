@@ -466,3 +466,12 @@ public class SecurityConfig {
 }
 
 ```
+
+curl ที่ใช้ในการทดสอบ
+```shell
+curl --location 'http://localhost:8085/oauth2/token' \
+--header 'Content-Type: application/x-www-form-urlencoded' \
+--header 'Authorization: b2lkYy1jbGllbnQ6c2VjcmV0' \
+--data-urlencode 'grant_type=client_credentials' \
+--data-urlencode 'scope=openid'
+```
